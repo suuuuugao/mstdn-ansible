@@ -7,13 +7,23 @@
     uid: 2000
     create_home: true
 
+- name: Set home directory permissions
+  ansible.builtin.file:
+    path: "/home/{{ mastodon_app_user_name }}"
+    state: directory
+    owner: "{{ mastodon_app_user_name }}"
+    group: "{{ mastodon_app_user_name }}"
+    mode: '0755'
+
 - name: Set user password
   ansible.builtin.user:
     name: "{{ mastodon_app_user_name }}"
-    password: "{{ mastodon_app_user_password }}"
+    password: "{{ mastodon_app_user_password | password_hash('sha512') }}"
     state: present
   when:
-    - (mastodon_app_user_password is defined) and (mastodon_app_user_password | length > 0)
+    - mastodon_app_user_password is defined
+    - mastodon_app_user_password is not none
+    - mastodon_app_user_password | length > 0
 
 - name: Set administrative privileges
   ansible.builtin.user:
@@ -22,4 +32,5 @@
     groups: sudo
     state: present
   when:
-    - (mastodon_app_user_is_admin is defined) and (mastodon_app_user_password)
+    - mastodon_app_user_is_admin is defined
+    - mastodon_app_user_is_admin | bool

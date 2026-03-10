@@ -3,11 +3,11 @@
   hosts: all
   roles:
     - mastodon_sys_packages
-    - mastodon_app_packages
-    - mastodon_db_packages
     - mastodon_app_user
+    - mastodon_db_packages
     - mastodon_db_user
     - mastodon_app_repository
     - mastodon_app_anyenv
+    - mastodon_app_packages
     - mastodon_app_config
     - mastodon_app_systemd

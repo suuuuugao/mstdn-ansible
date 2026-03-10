@@ -11,11 +11,10 @@
   register: __result
 
 - name: Git clone mastodon
+  become: true
+  become_user: "{{ mastodon_app_user_name }}"
   ansible.builtin.git:
     repo: "{{ mastodon_app_repository }}"
     dest: "{{ mastodon_app_path }}"
     version: "{{ mastodon_app_version }}"
-  vars:
-    ansible_become: true
-    ansible_become_user: "{{ mastodon_app_user_name }}"
   register: res_git_mastodon
