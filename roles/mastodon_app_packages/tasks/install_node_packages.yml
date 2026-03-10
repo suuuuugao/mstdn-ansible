@@ -13,4 +13,5 @@
   loop:
     - cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/shims/yarn install"
   changed_when: "'Installed node' in __result.stderr"
+  failed_when: false
   register: __result
