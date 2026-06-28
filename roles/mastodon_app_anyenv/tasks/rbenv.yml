@@ -47,7 +47,7 @@
   args:
     chdir: "{{ mastodon_app_path }}"
   changed_when: false
-  register: __result_node_versions
+  register: __result_ruby_versions
 
 - name: Install Ruby
   ansible.builtin.command:
@@ -63,7 +63,7 @@
     chdir: "{{ mastodon_app_path }}"
   loop:
     - cmd: "{{ mastodon_app_anyenv_path }}/envs/rbenv/bin/rbenv install -s"
-    - cmd: "{{ mastodon_app_anyenv_path }}/envs/rbenv/bin/rbenv global {{ __result_node_versions.results[2].stdout }}"
+    - cmd: "{{ mastodon_app_anyenv_path }}/envs/rbenv/bin/rbenv global {{ __result_ruby_versions.results[2].stdout }}"
   changed_when:
     - "'Installed ruby' in __result.stdout"
   register: __result
