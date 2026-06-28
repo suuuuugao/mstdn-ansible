@@ -12,3 +12,11 @@ This Ansible playbook was created to build and operate the distributed social ne
 It is also not maintainable or scalable because it is written in a very specific way and not based on Ansible best practices.
 
 The goal of this project is to publish a new playbook for running a mastodon server.
+
+## How to use
+
+```bash
+ansible-playbook -i inventory.yml mastodon_setup.yml
+```
+
+> **Note**: `mastodon-setup.yml` (old monolithic playbook) has been moved to `legacy/` for reference only.
