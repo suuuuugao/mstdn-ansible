@@ -52,19 +52,50 @@
   changed_when: "'Installed node' in __result.stderr"
   register: __result
 
-- name: Install yarn
+- name: Upgrade npm
   ansible.builtin.command:
-    cmd: "{{ item.cmd }}"
+    cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/shims/npm install -U npm"
   environment:
     NODENV_ROOT: "{{ mastodon_app_anyenv_path }}/envs/nodenv"
     NODENV_SHELL: "bash"
   vars:
     ansible_become: true
     ansible_become_user: "{{ mastodon_app_user_name }}"
-  loop:
-    - cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/shims/npm install -U npm"
-    - cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/shims/npm install -g yarn"
-    - cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/shims/corepack enable"
-    - cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/shims/yarn set version classic"
-  changed_when: "'Installed node' in __result.stderr"
+  changed_when: false
+  register: __result
+
+- name: Install yarn via npm
+  ansible.builtin.command:
+    cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/shims/npm install -g yarn"
+  environment:
+    NODENV_ROOT: "{{ mastodon_app_anyenv_path }}/envs/nodenv"
+    NODENV_SHELL: "bash"
+  vars:
+    ansible_become: true
+    ansible_become_user: "{{ mastodon_app_user_name }}"
+  changed_when: "'added 1 package' in __result.stdout or 'updated 1 package' in __result.stdout"
+  register: __result
+
+- name: Enable corepack
+  ansible.builtin.command:
+    cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/shims/corepack enable"
+  environment:
+    NODENV_ROOT: "{{ mastodon_app_anyenv_path }}/envs/nodenv"
+    NODENV_SHELL: "bash"
+  vars:
+    ansible_become: true
+    ansible_become_user: "{{ mastodon_app_user_name }}"
+  changed_when: false
+  register: __result
+
+- name: Set yarn version to classic
+  ansible.builtin.command:
+    cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/shims/yarn set version classic"
+  environment:
+    NODENV_ROOT: "{{ mastodon_app_anyenv_path }}/envs/nodenv"
+    NODENV_SHELL: "bash"
+  vars:
+    ansible_become: true
+    ansible_become_user: "{{ mastodon_app_user_name }}"
+  changed_when: "'Switched to' in __result.stdout"
   register: __result
