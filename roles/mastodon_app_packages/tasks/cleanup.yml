@@ -6,3 +6,4 @@
   loop:
     - path: "{{ mastodon_app_path }}/node_modules"
     - path: "{{ mastodon_app_path }}/vendor/bundle"
+  when: mastodon_force_reinstall_dependencies | default(false)
