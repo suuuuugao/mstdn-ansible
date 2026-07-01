@@ -4,16 +4,16 @@ __mastodon_db_aptkey_url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
 __mastodon_apt_db_packages:
 #  - imagemagick
 #  - ffmpeg
-#  - libpq-dev
-#  - libxml2-dev
-#  - libxslt1-dev
+  - libpq-dev
+  - libxml2-dev
+  - libxslt1-dev
 #  - file
   - git-core
-#  - libprotobuf-dev
-#  - protobuf-compiler
-#  - pkg-config
-#  - autoconf
-#  - bison
+  - libprotobuf-dev
+  - protobuf-compiler
+  - pkg-config
+  - autoconf
+  - bison
 #  - libreadline6-dev
 #  - libncurses5-dev
 #  - libgdbm-dev
@@ -25,5 +25,5 @@ __mastodon_apt_db_packages:
   - python3-psycopg2
 #  - certbot
 #  - python3-certbot-nginx
-#  - libidn11-dev
-#  - libicu-dev
+  - libidn11-dev
+  - libicu-dev
