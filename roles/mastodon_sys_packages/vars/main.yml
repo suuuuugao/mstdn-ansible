@@ -6,3 +6,4 @@ __mastodon_apt_packages:
   - apt-transport-https
   - lsb-release
   - ca-certificates
+  - acl
