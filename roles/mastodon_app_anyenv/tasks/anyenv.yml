@@ -3,6 +3,7 @@
   ansible.builtin.apt:
     name:
       - python3-pexpect
+      - libatomic1
     update_cache: true
     state: present
 
