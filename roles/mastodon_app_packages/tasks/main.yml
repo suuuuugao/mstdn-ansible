@@ -1,6 +1,6 @@
 ---
 - name: Include tasks
-  ansible.builtin.include_tasks: delete_packages.yml
+  ansible.builtin.include_tasks: cleanup.yml
 
 - name: Include tasks
   ansible.builtin.include_tasks: install_node_packages.yml
