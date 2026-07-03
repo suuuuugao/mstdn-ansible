@@ -1,31 +1,65 @@
-Role Name
-=========
+mastodon_app_repository
+=======================
 
-A brief description of the role goes here.
+Mastodon アプリのリポジトリを GitHub からクローンする。
+`mastodon` OS ユーザとして実行し、指定バージョン (タグ / コミット) をチェックアウトする。
+
+対応 OS
+-------
+
+- Ubuntu 22.04 LTS
+- Ubuntu 24.04 LTS
+
+(Incus システムコンテナ経由で Ansible 管理)
+
+必要変数
+--------
+
+| 変数名 | デフォルト値 | 説明 |
+|--------|-------------|------|
+| `mastodon_app_version` | **(必須、デフォルトなし)** | チェックアウトするバージョン (例: `v4.3.2`) |
+| `mastodon_app_user_name` | `mastodon` | クローンを実行する OS ユーザ名 |
+| `mastodon_app_path` | `/home/mastodon/live` | クローン先ディレクトリ |
+| `mastodon_app_repository` | `https://github.com/mastodon/mastodon.git` | クローン元 URL |
+
+生成ファイル・ディレクトリ
+--------------------------
+
+| パス | 内容 |
+|------|------|
+| `{{ mastodon_app_path }}/` | Mastodon ソースツリー全体 |
+
+systemd / nginx / postgresql への影響
+--------------------------------------
+
+影響なし。
+
+再実行時の挙動 (冪等性)
+------------------------
+
+- **mastodon-repository.yml**: 事前チェックで `mastodon` OS ユーザの存在を確認する (`check_mode: true`)。
+  `git` モジュールは毎回 `git fetch` を実行し、指定 `version` が既にチェックアウト済みなら `ok`、
+  差異があれば `changed` を返す。
+
+使用 tags
+---------
+
+なし。
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
-
-Role Variables
---------------
-
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
-
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+- `mastodon_app_user` ロールで `mastodon` OS ユーザが作成済みであること。
+- ターゲットホストからインターネット (github.com) へのアクセスが可能であること。
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
+    - hosts: mastodon_servers
       roles:
-         - { role: username.rolename, x: 42 }
+        - role: mastodon_app_repository
+          vars:
+            mastodon_app_version: "v4.3.2"
 
 License
 -------
@@ -35,4 +69,4 @@ BSD
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+guskma

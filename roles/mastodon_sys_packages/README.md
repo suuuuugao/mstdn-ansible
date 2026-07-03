@@ -1,31 +1,71 @@
 mastodon_sys_packages
 =====================
 
-A brief description of the role goes here.
+システム全体の apt パッケージを更新 (`apt full-upgrade`) し、
+他のロールが必要とする共通システムパッケージをインストールする。
+Mastodon セットアップの最初に実行することを想定している。
+
+対応 OS
+-------
+
+- Ubuntu 22.04 LTS
+- Ubuntu 24.04 LTS
+
+(Incus システムコンテナ経由で Ansible 管理)
+
+必要変数
+--------
+
+ユーザ設定変数なし。内部変数のみ (`vars/main.yml`):
+
+| 変数名 | 説明 |
+|--------|------|
+| `__mastodon_apt_packages` | インストールする共通パッケージ一覧 |
+
+インストールされるパッケージ:
+- `curl`
+- `wget`
+- `gnupg`
+- `apt-transport-https`
+- `lsb-release`
+- `ca-certificates`
+- `acl`
+
+生成ファイル・ディレクトリ
+--------------------------
+
+なし (システムパッケージの状態変更のみ)。
+
+systemd / nginx / postgresql への影響
+--------------------------------------
+
+- `apt full-upgrade` はカーネルや libc のアップグレードを含む場合がある。
+  その場合は Debian/Ubuntu の標準動作として関連サービスが再起動されることがある。
+
+再実行時の挙動 (冪等性)
+------------------------
+
+- **upgrade_apt_packages.yml**:
+  - `apt` (upgrade: full): 毎回実行される。アップグレード対象パッケージがある場合は `changed`、なければ `ok`。
+  - `apt` (共通パッケージ): 全パッケージがインストール済みであれば `ok`。
+
+使用 tags
+---------
+
+なし。
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
-
-Role Variables
---------------
-
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
-
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+なし (他ロールへの依存なし)。
+ただしインターネットアクセスが必要 (APT リポジトリへの接続)。
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
+    - hosts: mastodon_servers
       roles:
-         - { role: username.rolename, x: 42 }
+        - role: mastodon_sys_packages
 
 License
 -------
@@ -35,4 +75,4 @@ BSD
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+guskma

@@ -1,31 +1,66 @@
-Role Name
-=========
+mastodon_app_user
+=================
 
-A brief description of the role goes here.
+Mastodon アプリを実行する OS ユーザ (`mastodon`) を作成する。
+UID 2000 でホームディレクトリを作成し、オプションでパスワードの設定と sudo グループへの追加を行う。
+
+対応 OS
+-------
+
+- Ubuntu 22.04 LTS
+- Ubuntu 24.04 LTS
+
+(Incus システムコンテナ経由で Ansible 管理)
+
+必要変数
+--------
+
+| 変数名 | デフォルト値 | 説明 |
+|--------|-------------|------|
+| `mastodon_app_user_name` | `mastodon` | 作成する OS ユーザ名 |
+| `mastodon_app_user_password` | `` (空) | パスワード (空の場合はパスワードなしで作成) |
+| `mastodon_app_user_is_admin` | `false` | `true` にすると `sudo` グループに追加 |
+
+生成ファイル・ディレクトリ
+--------------------------
+
+| パス | 内容 |
+|------|------|
+| `/home/mastodon/` | mastodon ユーザのホームディレクトリ (mode: `0755`) |
+
+systemd / nginx / postgresql への影響
+--------------------------------------
+
+影響なし。
+
+再実行時の挙動 (冪等性)
+------------------------
+
+- **add-app-user.yml**:
+  - `user` モジュール: ユーザが既存の場合は `ok`。UID 2000 は初回作成時のみ割り当てられる。
+  - `file` モジュール: ホームディレクトリのパーミッション確認は常に実行され、差異があれば `changed`。
+  - パスワード設定タスク: `mastodon_app_user_password` が定義かつ空でない場合のみ実行。
+  - sudo グループタスク: `mastodon_app_user_is_admin: true` の場合のみ実行。
+
+使用 tags
+---------
+
+なし。
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
-
-Role Variables
---------------
-
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
-
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+なし (他ロールへの依存なし)。
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
+    - hosts: mastodon_servers
       roles:
-         - { role: username.rolename, x: 42 }
+        - role: mastodon_app_user
+          vars:
+            mastodon_app_user_name: mastodon
+            mastodon_app_user_is_admin: false
 
 License
 -------
@@ -35,4 +70,4 @@ BSD
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+guskma

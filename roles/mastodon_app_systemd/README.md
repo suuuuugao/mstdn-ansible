@@ -1,31 +1,74 @@
-Role Name
-=========
+mastodon_app_systemd
+====================
 
-A brief description of the role goes here.
+Mastodon の systemd ユニットファイルをアプリリポジトリの `dist/` ディレクトリから
+`/etc/systemd/system/` へコピーする。
+
+対応 OS
+-------
+
+- Ubuntu 22.04 LTS
+- Ubuntu 24.04 LTS
+
+(Incus システムコンテナ経由で Ansible 管理)
+
+必要変数
+--------
+
+| 変数名 | デフォルト値 | 説明 |
+|--------|-------------|------|
+| `mastodon_app_path` | `/home/mastodon/live` | Mastodon アプリルートディレクトリ |
+| `mastodon_sys_copyfiles` | 下記参照 | コピーするファイルの `src`/`dest` リスト |
+
+`mastodon_sys_copyfiles` のデフォルト値:
+
+```yaml
+mastodon_sys_copyfiles:
+  - src: "{{ mastodon_app_path }}/dist/mastodon-web.service"
+    dest: /etc/systemd/system/
+  - src: "{{ mastodon_app_path }}/dist/mastodon-sidekiq.service"
+    dest: /etc/systemd/system/
+```
+
+生成ファイル・ディレクトリ
+--------------------------
+
+| パス | 内容 |
+|------|------|
+| `/etc/systemd/system/mastodon-web.service` | Mastodon Web (Puma) サービスユニット |
+| `/etc/systemd/system/mastodon-sidekiq.service` | Mastodon Sidekiq サービスユニット |
+
+systemd / nginx / postgresql への影響
+--------------------------------------
+
+- `mastodon-web.service` と `mastodon-sidekiq.service` を `/etc/systemd/system/` に登録する。
+- このロールはサービスの **enable / start を行わない**。ファイルコピー後に `systemctl daemon-reload` が必要。
+- 初回インストール後に `systemctl enable --now mastodon-web mastodon-sidekiq` を手動または別タスクで実行すること。
+
+再実行時の挙動 (冪等性)
+------------------------
+
+- **copy_config.yml**: `copy` モジュール (`remote_src: true`) を使用。
+  コピー先ファイルの内容が同一であれば `ok`、差異があれば `changed` を返す。
+  上書きは常に実行されるが、ファイル内容が変わらない限り実際の変更は発生しない。
+
+使用 tags
+---------
+
+なし。
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
-
-Role Variables
---------------
-
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
-
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+- `mastodon_app_repository` ロールで Mastodon リポジトリがクローン済みであること (`dist/*.service` が存在すること)。
+- コピー先への書き込みに `root` 権限が必要 (`become_user: root` を使用)。
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
+    - hosts: mastodon_servers
       roles:
-         - { role: username.rolename, x: 42 }
+        - role: mastodon_app_systemd
 
 License
 -------
@@ -35,4 +78,4 @@ BSD
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+guskma
