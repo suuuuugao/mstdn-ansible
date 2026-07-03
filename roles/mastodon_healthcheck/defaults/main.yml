@@ -1,0 +1,10 @@
+---
+mastodon_healthcheck_db_name: "mastodon_production"
+mastodon_healthcheck_db_user: "mastodon"
+mastodon_healthcheck_redis_host: "127.0.0.1"
+mastodon_healthcheck_redis_port: 6379
+mastodon_healthcheck_http_url: "http://localhost:3000/health"
+mastodon_healthcheck_services:
+  - mastodon-web
+  - mastodon-sidekiq
+  - mastodon-streaming

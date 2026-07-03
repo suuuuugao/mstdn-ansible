@@ -1,0 +1,74 @@
+---
+- name: Enable maintenance mode
+  when: mastodon_maintenance_enable | bool
+  block:
+    - name: Stop Mastodon services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: stopped
+      loop: "{{ mastodon_maintenance_services }}"
+      become: true
+
+    - name: Deploy maintenance page
+      ansible.builtin.copy:
+        content: |
+          <!DOCTYPE html>
+          <html lang="ja">
+          <head><meta charset="UTF-8"><title>Maintenance</title></head>
+          <body>
+          <h1>メンテナンス中</h1>
+          <p>只今メンテナンス中です。しばらくお待ちください。</p>
+          </body>
+          </html>
+        dest: "{{ mastodon_maintenance_page_dest }}"
+        owner: www-data
+        group: www-data
+        mode: "0644"
+      become: true
+
+    - name: Enable maintenance nginx config
+      ansible.builtin.template:
+        src: maintenance.nginx.conf.j2
+        dest: "{{ mastodon_maintenance_nginx_available_dir }}/maintenance"
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+      ignore_errors: true
+
+    - name: Show maintenance mode enabled
+      ansible.builtin.debug:
+        msg: "Maintenance mode ENABLED. Mastodon services stopped."
+
+- name: Disable maintenance mode
+  when: not (mastodon_maintenance_enable | bool)
+  block:
+    - name: Start Mastodon services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+      loop: "{{ mastodon_maintenance_services }}"
+      become: true
+
+    - name: Remove maintenance page
+      ansible.builtin.file:
+        path: "{{ mastodon_maintenance_page_dest }}"
+        state: absent
+      become: true
+
+    - name: Remove maintenance nginx config
+      ansible.builtin.file:
+        path: "{{ mastodon_maintenance_nginx_available_dir }}/maintenance"
+        state: absent
+      become: true
+      ignore_errors: true
+
+    - name: Reload nginx
+      ansible.builtin.systemd:
+        name: nginx
+        state: reloaded
+      become: true
+
+    - name: Show maintenance mode disabled
+      ansible.builtin.debug:
+        msg: "Maintenance mode DISABLED. Mastodon services started."

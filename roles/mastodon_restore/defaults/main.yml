@@ -1,0 +1,9 @@
+---
+mastodon_restore_confirm: false  # MUST be explicitly set to true to allow any destructive operation
+mastodon_restore_backup_dir: "/home/mastodon/backups"
+mastodon_restore_backup_timestamp: ""  # required: set to the subdirectory name under mastodon_restore_backup_dir
+mastodon_restore_target_db: "mastodon_production"
+mastodon_restore_db_user: "mastodon"
+mastodon_restore_app_path: "/home/mastodon/live"
+mastodon_restore_nginx_conf_dir: "/etc/nginx/sites-available"
+mastodon_restore_systemd_dir: "/etc/systemd/system"

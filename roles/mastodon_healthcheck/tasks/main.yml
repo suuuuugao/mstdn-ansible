@@ -1,0 +1,68 @@
+---
+- name: Check systemd service status
+  ansible.builtin.command:
+    cmd: systemctl is-active {{ item }}
+  loop: "{{ mastodon_healthcheck_services }}"
+  become: true
+  register: _svc_status
+  changed_when: false
+  failed_when: false
+
+- name: Report systemd service status
+  ansible.builtin.debug:
+    msg: "{{ item.item }}: {{ item.stdout | default('unknown') }}"
+  loop: "{{ _svc_status.results }}"
+  changed_when: false
+
+- name: Check PostgreSQL connectivity
+  ansible.builtin.command:
+    cmd: psql -d {{ mastodon_healthcheck_db_name }} -c "SELECT 1;" -t
+  become: true
+  become_user: "{{ mastodon_healthcheck_db_user }}"
+  register: _pg_check
+  changed_when: false
+  failed_when: false
+
+- name: Report PostgreSQL connectivity
+  ansible.builtin.debug:
+    msg: "PostgreSQL: {{ 'OK' if _pg_check.rc == 0 else 'FAILED (rc=' + (_pg_check.rc | string) + ')' }}"
+  changed_when: false
+
+- name: Check Redis connectivity
+  ansible.builtin.command:
+    cmd: redis-cli -h {{ mastodon_healthcheck_redis_host }} -p {{ mastodon_healthcheck_redis_port }} PING
+  register: _redis_check
+  changed_when: false
+  failed_when: false
+
+- name: Report Redis connectivity
+  ansible.builtin.debug:
+    msg: "Redis: {{ 'OK' if _redis_check.stdout == 'PONG' else 'FAILED (' + (_redis_check.stdout | default('no response')) + ')' }}"
+  changed_when: false
+
+- name: Check HTTP response
+  ansible.builtin.uri:
+    url: "{{ mastodon_healthcheck_http_url }}"
+    method: GET
+    status_code:
+      - 200
+      - 204
+    timeout: 10
+  register: _http_check
+  changed_when: false
+  failed_when: false
+
+- name: Report HTTP response
+  ansible.builtin.debug:
+    msg: "HTTP {{ mastodon_healthcheck_http_url }}: {{ 'OK (' + (_http_check.status | string) + ')' if _http_check.status is defined else 'FAILED' }}"
+  changed_when: false
+
+- name: Summarize health check results
+  ansible.builtin.debug:
+    msg:
+      - "=== Mastodon Health Check Summary ==="
+      - "systemd services: {{ _svc_status.results | map(attribute='item') | zip(_svc_status.results | map(attribute='stdout') | map('default', 'unknown')) | map('join', '=') | list }}"
+      - "PostgreSQL: {{ 'OK' if _pg_check.rc == 0 else 'FAILED' }}"
+      - "Redis: {{ 'OK' if _redis_check.stdout == 'PONG' else 'FAILED' }}"
+      - "HTTP: {{ 'OK' if (_http_check.status is defined and _http_check.status in [200, 204]) else 'FAILED' }}"
+  changed_when: false
