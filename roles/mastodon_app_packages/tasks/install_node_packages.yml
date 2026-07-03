@@ -12,6 +12,6 @@
     chdir: "{{ mastodon_app_path }}"
   loop:
     - cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/shims/yarn install"
-  changed_when: "'Done' in __result.stdout"
+  changed_when: "'Already up-to-date' not in __result.stdout"
   failed_when: false
   register: __result
