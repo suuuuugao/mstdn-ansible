@@ -3,3 +3,15 @@ mastodon_app_path: /home/mastodon/live
 mastodon_app_anyenv_path: /home/mastodon/.anyenv
 mastodon_app_user_name: mastodon
 mastodon_app_environment: production
+
+# Optional feature defaults (empty string = feature disabled / unset in .env)
+mastodon_es_hostname: ""
+mastodon_es_port: ""
+mastodon_es_username: ""
+mastodon_es_password: ""
+mastodon_smtp_login: ""
+mastodon_smtp_password: ""
+mastodon_s3_bucket: ""
+mastodon_s3_aws_access_key_id: ""
+mastodon_s3_aws_secret_access_key: ""
+mastodon_s3_alias_host: ""
