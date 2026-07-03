@@ -4,13 +4,22 @@ mastodon_app_anyenv_path: /home/mastodon/.anyenv
 mastodon_app_user_name: mastodon
 mastodon_app_environment: production
 
-# Optional feature defaults (empty string = feature disabled / unset in .env)
+# Optional feature defaults (empty string or safe value = feature disabled / unset in .env)
+# ES (Elasticsearch) — disabled by default
 mastodon_es_hostname: ""
 mastodon_es_port: ""
 mastodon_es_username: ""
 mastodon_es_password: ""
+
+# SMTP optional credentials (server/port/from_address are required but safe to default)
+mastodon_smtp_server: "localhost"
+mastodon_smtp_port: "25"
+mastodon_smtp_from_address: ""
 mastodon_smtp_login: ""
 mastodon_smtp_password: ""
+
+# S3 — disabled by default
+mastodon_s3_enabled: "false"
 mastodon_s3_bucket: ""
 mastodon_s3_aws_access_key_id: ""
 mastodon_s3_aws_secret_access_key: ""
