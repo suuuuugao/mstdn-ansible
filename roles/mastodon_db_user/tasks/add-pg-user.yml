@@ -1,15 +1,14 @@
 ---
-- name: Set become user
-  ansible.builtin.set_fact:
-    ansible_become: true
-    ansible_become_user: postgres
+- name: Manage PostgreSQL user
+  block:
+    - name: Create PostgreSQL user
+      community.postgresql.postgresql_user:
+        name: "{{ mastodon_db_user_name }}"
+        password: "{{ mastodon_db_user_password }}"
+        role_attr_flags: CREATEDB
 
-- name: Create PostgreSQL user
-  community.postgresql.postgresql_user:
-    name: "{{ mastodon_db_user_name }}"
-    password: "{{ mastodon_db_user_password }}"
-    role_attr_flags: CREATEDB
-
-- name: Display PostgreSQL password
-  ansible.builtin.debug:
-    var: mastodon_db_user_password
+    - name: Display PostgreSQL password
+      ansible.builtin.debug:
+        var: mastodon_db_user_password
+  become: true
+  become_user: postgres
