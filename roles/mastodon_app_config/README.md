@@ -1,31 +1,105 @@
-Role Name
-=========
+mastodon_app_config
+===================
 
-A brief description of the role goes here.
+Mastodon アプリの `.env` 設定ファイルを構成する。
+`.env.production.sample` をベースにコピーし、シークレット (SECRET_KEY_BASE / OTP_SECRET / VAPID キー) を生成してすべての設定値を `lineinfile` で書き込む。
+
+対応 OS
+-------
+
+- Ubuntu 22.04 LTS
+- Ubuntu 24.04 LTS
+
+(Incus システムコンテナ経由で Ansible 管理)
+
+必要変数
+--------
+
+### デフォルト値あり
+
+| 変数名 | デフォルト値 | 説明 |
+|--------|-------------|------|
+| `mastodon_app_path` | `/home/mastodon/live` | Mastodon アプリルートディレクトリ |
+| `mastodon_app_anyenv_path` | `/home/mastodon/.anyenv` | anyenv インストール先 |
+| `mastodon_app_user_name` | `mastodon` | アプリ実行 OS ユーザ名 |
+| `mastodon_app_environment` | `production` | Rails 環境 (`RAILS_ENV`) |
+
+### 必須 (デフォルトなし)
+
+| 変数名 | 説明 |
+|--------|------|
+| `mastodon_app_local_domain` | Mastodon のドメイン名 (例: `example.com`) |
+| `mastodon_redis_hostname` | Redis ホスト |
+| `mastodon_redis_port` | Redis ポート |
+| `mastodon_pg_hostname` | PostgreSQL ホスト |
+| `mastodon_pg_username` | PostgreSQL ユーザ名 |
+| `mastodon_pg_name` | PostgreSQL データベース名 |
+| `mastodon_pg_password` | PostgreSQL パスワード |
+| `mastodon_pg_port` | PostgreSQL ポート |
+| `mastodon_es_enabled` | Elasticsearch 有効フラグ (`true`/`false`) |
+| `mastodon_es_hostname` | Elasticsearch ホスト |
+| `mastodon_es_port` | Elasticsearch ポート |
+| `mastodon_es_username` | Elasticsearch ユーザ名 |
+| `mastodon_es_password` | Elasticsearch パスワード |
+| `mastodon_smtp_server` | SMTP サーバホスト |
+| `mastodon_smtp_port` | SMTP ポート |
+| `mastodon_smtp_login` | SMTP ログイン名 |
+| `mastodon_smtp_password` | SMTP パスワード |
+| `mastodon_smtp_from_address` | メール送信元アドレス |
+| `mastodon_s3_enabled` | S3 有効フラグ (`true`/`false`) |
+| `mastodon_s3_bucket` | S3 バケット名 |
+| `mastodon_s3_aws_access_key_id` | AWS アクセスキー ID |
+| `mastodon_s3_aws_secret_access_key` | AWS シークレットキー |
+| `mastodon_s3_alias_host` | S3 エイリアスホスト |
+
+生成ファイル・ディレクトリ
+--------------------------
+
+| パス | 内容 |
+|------|------|
+| `{{ mastodon_app_path }}/.env` | Mastodon アプリ環境設定ファイル |
+
+systemd / nginx / postgresql への影響
+--------------------------------------
+
+直接的な影響なし。ただし `.env` の SECRET_KEY_BASE / OTP_SECRET / VAPID キーが変更された場合、
+実行中の `mastodon-web`、`mastodon-sidekiq`、`mastodon-streaming` の再起動が必要になる。
+
+再実行時の挙動 (冪等性)
+------------------------
+
+- **copy-envfile.yml**: `force: false` のため、`.env` が既に存在する場合はコピーをスキップ (`ok`)。
+- **generate-secrets.yml**: SECRET_KEY_BASE / OTP_SECRET は毎回 `/dev/urandom` から生成される。
+  VAPID キーも毎回 `rake mastodon:webpush:generate_vapid_key` で生成される。
+- **set-app-config.yml**: シークレット系 (SECRET_KEY_BASE / OTP_SECRET / VAPID) は `.env` が新規コピーされた場合のみ書き込まれる (`when: __result_copy_envfile.changed`)。
+  その他の設定項目 (LOCAL_DOMAIN / DB_* / REDIS_* 等) は `lineinfile` で常に上書きされる (`changed` は差異がある場合のみ)。
+
+使用 tags
+---------
+
+なし。
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
-
-Role Variables
---------------
-
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
-
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+- `mastodon_app_repository` ロールで Mastodon リポジトリがクローン済みであること (`.env.production.sample` が存在すること)。
+- `mastodon_app_anyenv` ロールで rbenv / bundler が利用可能であること (VAPID キー生成に使用)。
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
+    - hosts: mastodon_servers
       roles:
-         - { role: username.rolename, x: 42 }
+        - role: mastodon_app_config
+          vars:
+            mastodon_app_local_domain: "example.com"
+            mastodon_pg_hostname: "localhost"
+            mastodon_pg_username: "mastodon"
+            mastodon_pg_name: "mastodon_production"
+            mastodon_pg_password: "{{ vault_pg_password }}"
+            mastodon_pg_port: 5432
+            mastodon_redis_hostname: "localhost"
+            mastodon_redis_port: 6379
 
 License
 -------
@@ -35,4 +109,4 @@ BSD
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+guskma
