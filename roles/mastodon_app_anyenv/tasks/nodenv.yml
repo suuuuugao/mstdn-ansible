@@ -87,6 +87,9 @@
 - name: Rehash nodenv after yarn install
   ansible.builtin.command:
     cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/bin/nodenv rehash"
+  environment:
+    NODENV_ROOT: "{{ mastodon_app_anyenv_path }}/envs/nodenv"
+    NODENV_SHELL: "bash"
   vars:
     ansible_become: true
     ansible_become_user: "{{ mastodon_app_user_name }}"
@@ -107,6 +110,9 @@
 - name: Rehash nodenv after corepack enable
   ansible.builtin.command:
     cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/bin/nodenv rehash"
+  environment:
+    NODENV_ROOT: "{{ mastodon_app_anyenv_path }}/envs/nodenv"
+    NODENV_SHELL: "bash"
   vars:
     ansible_become: true
     ansible_become_user: "{{ mastodon_app_user_name }}"
