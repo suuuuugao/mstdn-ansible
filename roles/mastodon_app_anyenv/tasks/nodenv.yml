@@ -72,27 +72,6 @@
   changed_when: "'added 1 package' in __result.stdout or 'updated 1 package' in __result.stdout"
   register: __result
 
-- name: Install corepack via npm (Node.js 22.12+ does not bundle corepack)
-  ansible.builtin.command:
-    cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/shims/npm install -g corepack"
-  environment:
-    NODENV_ROOT: "{{ mastodon_app_anyenv_path }}/envs/nodenv"
-    NODENV_SHELL: "bash"
-  vars:
-    ansible_become: true
-    ansible_become_user: "{{ mastodon_app_user_name }}"
-  register: __result_install_corepack
-  changed_when: "'added 1 package' in __result_install_corepack.stdout"
-  ignore_errors: false
-
-- name: Rehash nodenv after corepack install
-  ansible.builtin.command:
-    cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/bin/nodenv rehash"
-  vars:
-    ansible_become: true
-    ansible_become_user: "{{ mastodon_app_user_name }}"
-  changed_when: false
-
 - name: Enable corepack
   ansible.builtin.command:
     cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/shims/corepack enable"
