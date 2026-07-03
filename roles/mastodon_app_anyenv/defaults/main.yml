@@ -3,3 +3,6 @@ mastodon_app_path: /home/mastodon/live
 mastodon_app_anyenv_path: /home/mastodon/.anyenv
 mastodon_app_user_name: mastodon
 mastodon_app_shell_profile: /home/mastodon/.bash_profile
+# pinned versions — change these when upgrading
+mastodon_node_version: "22.11.0"
+mastodon_ruby_version: "3.3.4"

@@ -41,11 +41,7 @@
   vars:
     ansible_become: true
     ansible_become_user: "{{ mastodon_app_user_name }}"
-    __nodejs_version_re: "{{ arg_nodejs_version_re | default('^\\d+') }}"
-    __version_nodejs: "{{ __result_node_versions.results[0].stdout_lines | \
-      select('ansible.builtin.regex', __nodejs_version_re) | \
-      sort(reverse=true) | first }}"
-    # __version_nodejs_global: "{{ __result_node_versions.results[1].stdout }}"
+    __version_nodejs: "{{ mastodon_node_version }}"
   loop:
     - cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/bin/nodenv install -s {{ __version_nodejs }}"
     - cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/bin/nodenv global {{ __version_nodejs }}"
