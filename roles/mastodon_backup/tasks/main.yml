@@ -1,0 +1,68 @@
+---
+- name: Ensure backup directory exists
+  ansible.builtin.file:
+    path: "{{ mastodon_backup_dir }}/{{ mastodon_backup_timestamp }}"
+    state: directory
+    owner: mastodon
+    group: mastodon
+    mode: "0700"
+  become: true
+
+- name: Dump PostgreSQL database
+  ansible.builtin.command:
+    cmd: >
+      pg_dump -Fc {{ mastodon_backup_db_name }}
+      -f {{ mastodon_backup_dir }}/{{ mastodon_backup_timestamp }}/{{ mastodon_backup_db_name }}.dump
+  become: true
+  become_user: "{{ mastodon_backup_db_user }}"
+  changed_when: true
+
+- name: Backup .env.production
+  ansible.builtin.copy:
+    src: "{{ mastodon_backup_app_path }}/.env.production"
+    dest: "{{ mastodon_backup_dir }}/{{ mastodon_backup_timestamp }}/.env.production"
+    owner: mastodon
+    group: mastodon
+    mode: "0600"
+    remote_src: true
+  become: true
+
+- name: Backup media files (public/system)
+  ansible.builtin.archive:
+    path: "{{ mastodon_backup_app_path }}/public/system"
+    dest: "{{ mastodon_backup_dir }}/{{ mastodon_backup_timestamp }}/public_system.tar.gz"
+    format: gz
+    owner: mastodon
+    group: mastodon
+    mode: "0600"
+  become: true
+
+- name: Backup nginx configuration
+  ansible.builtin.archive:
+    path: "{{ mastodon_backup_nginx_conf_dir }}"
+    dest: "{{ mastodon_backup_dir }}/{{ mastodon_backup_timestamp }}/nginx_sites_available.tar.gz"
+    format: gz
+    mode: "0600"
+  become: true
+
+- name: Backup systemd unit files
+  ansible.builtin.shell:
+    cmd: >
+      tar -czf {{ mastodon_backup_dir }}/{{ mastodon_backup_timestamp }}/systemd_units.tar.gz
+      {{ mastodon_backup_systemd_dir }}/mastodon-*.service
+  become: true
+  changed_when: true
+
+- name: Set backup directory ownership
+  ansible.builtin.file:
+    path: "{{ mastodon_backup_dir }}/{{ mastodon_backup_timestamp }}"
+    state: directory
+    owner: mastodon
+    group: mastodon
+    mode: "0700"
+    recurse: true
+  become: true
+
+- name: Show backup location
+  ansible.builtin.debug:
+    msg: "Backup completed: {{ mastodon_backup_dir }}/{{ mastodon_backup_timestamp }}"

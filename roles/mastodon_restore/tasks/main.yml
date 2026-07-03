@@ -1,0 +1,112 @@
+---
+- name: Assert restore_confirm is set
+  ansible.builtin.assert:
+    that:
+      - mastodon_restore_confirm | bool
+    fail_msg: >
+      mastodon_restore_confirm must be explicitly set to true.
+      This role performs destructive restore operations.
+      Pass -e mastodon_restore_confirm=true to proceed.
+    success_msg: "Restore confirmation accepted. Proceeding with restore."
+
+- name: Assert backup timestamp is specified
+  ansible.builtin.assert:
+    that:
+      - mastodon_restore_backup_timestamp | length > 0
+    fail_msg: "mastodon_restore_backup_timestamp must be set to a backup subdirectory name."
+
+- name: Set backup source path fact
+  ansible.builtin.set_fact:
+    _restore_src: "{{ mastodon_restore_backup_dir }}/{{ mastodon_restore_backup_timestamp }}"
+
+- name: Check backup source exists
+  ansible.builtin.stat:
+    path: "{{ _restore_src }}"
+  register: _restore_src_stat
+  become: true
+
+- name: Fail if backup source does not exist
+  ansible.builtin.fail:
+    msg: "Backup directory {{ _restore_src }} does not exist."
+  when: not _restore_src_stat.stat.exists
+
+- name: Stop Mastodon services before restore
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: stopped
+  loop:
+    - mastodon-web
+    - mastodon-sidekiq
+    - mastodon-streaming
+  become: true
+  when: mastodon_restore_confirm | bool
+  ignore_errors: true
+
+- name: Restore PostgreSQL database
+  ansible.builtin.shell:
+    cmd: >
+      pg_restore -d {{ mastodon_restore_target_db }} --clean --if-exists
+      {{ _restore_src }}/{{ mastodon_restore_target_db }}.dump
+  become: true
+  become_user: "{{ mastodon_restore_db_user }}"
+  when: mastodon_restore_confirm | bool
+  changed_when: true
+
+- name: Restore .env.production
+  ansible.builtin.copy:
+    src: "{{ _restore_src }}/.env.production"
+    dest: "{{ mastodon_restore_app_path }}/.env.production"
+    owner: mastodon
+    group: mastodon
+    mode: "0600"
+    remote_src: true
+  become: true
+  when: mastodon_restore_confirm | bool
+
+- name: Restore media files (public/system)
+  ansible.builtin.unarchive:
+    src: "{{ _restore_src }}/public_system.tar.gz"
+    dest: "{{ mastodon_restore_app_path }}/public/"
+    owner: mastodon
+    group: mastodon
+    remote_src: true
+  become: true
+  when: mastodon_restore_confirm | bool
+
+- name: Restore nginx configuration
+  ansible.builtin.unarchive:
+    src: "{{ _restore_src }}/nginx_sites_available.tar.gz"
+    dest: "{{ mastodon_restore_nginx_conf_dir | dirname }}"
+    remote_src: true
+  become: true
+  when: mastodon_restore_confirm | bool
+
+- name: Restore systemd unit files
+  ansible.builtin.unarchive:
+    src: "{{ _restore_src }}/systemd_units.tar.gz"
+    dest: "{{ mastodon_restore_systemd_dir }}"
+    remote_src: true
+  become: true
+  when: mastodon_restore_confirm | bool
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true
+  when: mastodon_restore_confirm | bool
+
+- name: Start Mastodon services after restore
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started
+  loop:
+    - mastodon-web
+    - mastodon-sidekiq
+    - mastodon-streaming
+  become: true
+  when: mastodon_restore_confirm | bool
+
+- name: Show restore completion
+  ansible.builtin.debug:
+    msg: "Restore completed from {{ _restore_src }}"
+  when: mastodon_restore_confirm | bool

@@ -1,0 +1,8 @@
+---
+mastodon_backup_dir: "/home/mastodon/backups"
+mastodon_backup_db_name: "mastodon_production"
+mastodon_backup_db_user: "mastodon"
+mastodon_backup_timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
+mastodon_backup_app_path: "/home/mastodon/live"
+mastodon_backup_nginx_conf_dir: "/etc/nginx/sites-available"
+mastodon_backup_systemd_dir: "/etc/systemd/system"
