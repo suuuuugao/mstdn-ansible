@@ -15,6 +15,10 @@
   vars:
     ansible_become: true
     ansible_become_user: "{{ mastodon_app_user_name }}"
+  register: __result_anyenv_clone
+  retries: 3
+  delay: 10
+  until: __result_anyenv_clone is succeeded
 
 - name: Initialize anyenv (add configuration to .bashrc)
   ansible.builtin.lineinfile:
