@@ -104,6 +104,14 @@
   changed_when: false
   register: __result
 
+- name: Rehash nodenv after corepack enable
+  ansible.builtin.command:
+    cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/bin/nodenv rehash"
+  vars:
+    ansible_become: true
+    ansible_become_user: "{{ mastodon_app_user_name }}"
+  changed_when: false
+
 - name: Set yarn version to classic
   ansible.builtin.command:
     cmd: "{{ mastodon_app_anyenv_path }}/envs/nodenv/shims/yarn set version classic"
