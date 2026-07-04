@@ -2,8 +2,8 @@
 - name: Copy env file
   ansible.builtin.copy:
     src: "{{ mastodon_app_path }}/.env.production.sample"
-    dest: "{{ mastodon_app_path }}/.env"
-    mode: "0664"
+    dest: "{{ mastodon_app_path }}/.env.production"
+    mode: "0640"
     owner: "{{ mastodon_app_user_name }}"
     group: "{{ mastodon_app_user_name }}"
     force: false

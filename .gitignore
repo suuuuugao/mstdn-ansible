@@ -6,3 +6,4 @@ roles/**/group_vars
 roles/**/host_vars
 __*
 test/
+.vault_pass.txt

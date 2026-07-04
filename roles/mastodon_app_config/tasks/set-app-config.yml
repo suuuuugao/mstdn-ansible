@@ -2,8 +2,9 @@
 - name: Before Ansible 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
   become: true
   become_user: mastodon
+  no_log: true
   ansible.builtin.lineinfile:
-    path: "{{ mastodon_app_path }}/.env"
+    path: "{{ mastodon_app_path }}/.env.production"
     regexp: '^{{ item.key }}=.*'
     line: "{{ item.replace }}"
   loop:
@@ -38,3 +39,11 @@
     # - { key: 'SESSION_RETENTION_PERIOD', replace: "{{ retention_period.session }}" }
   when:
     - item.key not in ['SECRET_KEY_BASE', 'OTP_SECRET', 'VAPID_PRIVATE_KEY', 'VAPID_PUBLIC_KEY'] or __result_copy_envfile.changed
+
+- name: Ensure .env.production permissions
+  ansible.builtin.file:
+    path: "{{ mastodon_app_path }}/.env.production"
+    owner: "{{ mastodon_app_user_name }}"
+    group: "{{ mastodon_app_user_name }}"
+    mode: '0640'
+  become: true

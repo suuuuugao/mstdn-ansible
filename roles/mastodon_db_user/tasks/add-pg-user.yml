@@ -15,8 +15,5 @@
         role_attr_flags: CREATEDB
       when: __pg_user_check.rowcount == 0
 
-    - name: Display PostgreSQL password
-      ansible.builtin.debug:
-        var: mastodon_db_user_password
   become: true
   become_user: postgres
