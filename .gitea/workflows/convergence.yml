@@ -1,0 +1,115 @@
+name: convergence
+
+on:
+  schedule:
+    - cron: '0 16 * * *'  # nightly 01:00 JST (16:00 UTC)
+  workflow_dispatch:
+    inputs:
+      keep_instance:
+        description: 'Keep instance for debug (true/false)'
+        default: 'false'
+
+jobs:
+  converge:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: "2204", image: "ubuntu:22.04" }
+          - { os: "2404", image: "ubuntu:24.04" }
+    runs-on: incus-host
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set instance name
+        id: vars
+        run: echo "name=mstdn-ci-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}" >> $GITHUB_OUTPUT
+
+      - name: Launch and configure instance
+        run: |
+          incus launch ${{ matrix.image }} ${{ steps.vars.outputs.name }} --project mstdn-ci
+          sleep 15
+          incus exec ${{ steps.vars.outputs.name }} --project mstdn-ci -- cloud-init status --wait 2>/dev/null || true
+          incus exec ${{ steps.vars.outputs.name }} --project mstdn-ci -- \
+            bash -c "printf 'precedence ::ffff:0:0/96  100\n' > /etc/gai.conf"
+
+      - name: Create CI inventory
+        run: |
+          cat > /tmp/inventory-ci-${{ matrix.os }}.yml << INVENTORY
+          all:
+            hosts:
+              ${{ steps.vars.outputs.name }}:
+                ansible_connection: community.general.incus
+                ansible_incus_remote: local
+                ansible_incus_project: mstdn-ci
+                ansible_user: root
+                ansible_pipelining: false
+                ansible_become_flags: ''
+                ansible_become_method: su
+                mastodon_app_local_domain: 'mstdn-ci.example.com'
+                mastodon_redis_hostname: 'localhost'
+                mastodon_redis_port: '6379'
+                mastodon_pg_hostname: '/var/run/postgresql'
+                mastodon_pg_username: 'mastodon'
+                mastodon_pg_name: 'mastodon_production'
+                mastodon_pg_password: '${{ secrets.MASTODON_DB_PASSWORD }}'
+                mastodon_pg_port: '5432'
+                mastodon_es_enabled: 'false'
+                mastodon_smtp_server: 'localhost'
+                mastodon_smtp_port: '25'
+                mastodon_smtp_from_address: 'ci@mstdn-ci.example.com'
+                mastodon_s3_enabled: 'false'
+                mastodon_vapid_private_key: '${{ secrets.MASTODON_VAPID_PRIVATE_KEY }}'
+                mastodon_vapid_public_key: '${{ secrets.MASTODON_VAPID_PUBLIC_KEY }}'
+                mastodon_secret_key_base: '${{ secrets.MASTODON_SECRET_KEY_BASE }}'
+                mastodon_otp_secret: '${{ secrets.MASTODON_OTP_SECRET }}'
+                mastodon_active_record_encryption_deterministic_key: '${{ secrets.MASTODON_AR_DET_KEY }}'
+                mastodon_active_record_encryption_key_derivation_salt: '${{ secrets.MASTODON_AR_SALT }}'
+                mastodon_active_record_encryption_primary_key: '${{ secrets.MASTODON_AR_PRIMARY_KEY }}'
+          INVENTORY
+
+      - name: Run ansible (run1)
+        run: |
+          source ~/.local/ansible-venv/bin/activate
+          cd $GITHUB_WORKSPACE
+          ansible-playbook mastodon_setup.yml \
+            -i /tmp/inventory-ci-${{ matrix.os }}.yml \
+            --limit ${{ steps.vars.outputs.name }} \
+            -v 2>&1 | tee /tmp/run1-${{ matrix.os }}.log | tail -30
+          if grep -q 'failed=[1-9]' /tmp/run1-${{ matrix.os }}.log; then
+            echo "FAILED: run1 failed > 0"
+            exit 1
+          fi
+
+      - name: Run ansible (run2 idempotency check)
+        run: |
+          source ~/.local/ansible-venv/bin/activate
+          cd $GITHUB_WORKSPACE
+          ansible-playbook mastodon_setup.yml \
+            -i /tmp/inventory-ci-${{ matrix.os }}.yml \
+            --limit ${{ steps.vars.outputs.name }} \
+            -v 2>&1 | tee /tmp/run2-${{ matrix.os }}.log | tail -30
+          if sed -n '/PLAY RECAP/,$p' /tmp/run2-${{ matrix.os }}.log | grep -qE 'changed=[1-9]'; then
+            echo "FAILED: run2 changed > 0 (idempotency failure)"
+            cat /tmp/run2-${{ matrix.os }}.log
+            exit 1
+          fi
+          echo "OK: run2 changed=0"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ansible-logs-${{ matrix.os }}-${{ github.run_id }}
+          path: /tmp/run*.log
+
+      - name: Delete instance (always)
+        if: always()
+        run: |
+          KEEP=${{ github.event.inputs.keep_instance || 'false' }}
+          if [ "$KEEP" != "true" ]; then
+            incus delete --force ${{ steps.vars.outputs.name }} --project mstdn-ci || true
+          else
+            echo "Keeping instance for debug: ${{ steps.vars.outputs.name }}"
+          fi
