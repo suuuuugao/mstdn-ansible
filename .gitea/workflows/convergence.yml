@@ -34,6 +34,11 @@ jobs:
           incus exec ${{ steps.vars.outputs.name }} --project mstdn-ci -- \
             bash -c "printf 'precedence ::ffff:0:0/96  100\n' > /etc/gai.conf"
 
+      - name: Write vault password file
+        run: |
+          printf '%s' "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > /tmp/.vault_pass_ci
+          chmod 600 /tmp/.vault_pass_ci
+
       - name: Create CI inventory
         run: |
           cat > /tmp/inventory-ci-${{ matrix.os }}.yml << INVENTORY
@@ -76,6 +81,7 @@ jobs:
           ansible-playbook mastodon_setup.yml \
             -i /tmp/inventory-ci-${{ matrix.os }}.yml \
             --limit ${{ steps.vars.outputs.name }} \
+            --vault-password-file /tmp/.vault_pass_ci \
             -v 2>&1 | tee /tmp/run1-${{ matrix.os }}.log | tail -30
           if grep -q 'failed=[1-9]' /tmp/run1-${{ matrix.os }}.log; then
             echo "FAILED: run1 failed > 0"
@@ -89,6 +95,7 @@ jobs:
           ansible-playbook mastodon_setup.yml \
             -i /tmp/inventory-ci-${{ matrix.os }}.yml \
             --limit ${{ steps.vars.outputs.name }} \
+            --vault-password-file /tmp/.vault_pass_ci \
             -v 2>&1 | tee /tmp/run2-${{ matrix.os }}.log | tail -30
           if sed -n '/PLAY RECAP/,$p' /tmp/run2-${{ matrix.os }}.log | grep -qE 'changed=[1-9]'; then
             echo "FAILED: run2 changed > 0 (idempotency failure)"
@@ -104,9 +111,10 @@ jobs:
           name: ansible-logs-${{ matrix.os }}-${{ github.run_id }}
           path: /tmp/run*.log
 
-      - name: Delete instance (always)
+      - name: Cleanup (always)
         if: always()
         run: |
+          rm -f /tmp/.vault_pass_ci
           KEEP=${{ github.event.inputs.keep_instance || 'false' }}
           if [ "$KEEP" != "true" ]; then
             incus delete --force ${{ steps.vars.outputs.name }} --project mstdn-ci || true
