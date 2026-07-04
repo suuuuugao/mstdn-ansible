@@ -10,7 +10,7 @@ postgresql:
   hostname: '/var/run/postgresql'
   username: 'mastodon'
   db_name: 'mastodon_production'
-  password: 'mastodon123'
+  password: '{{ vault_postgresql_password }}'
   port: '5432'
   apt_key:
     url: 'https://www.postgresql.org/media/keys/ACCC4CF8.asc'
@@ -19,7 +19,7 @@ elasticsearch:
   hostname: 'localhost'
   port: '9200'
   username: 'elastic'
-  password: 'password'
+  password: '{{ vault_elasticsearch_password }}'
 smtp:
   server: ''
   port: '587'
