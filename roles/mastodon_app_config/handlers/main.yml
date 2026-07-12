@@ -8,4 +8,5 @@
     - mastodon-sidekiq
     - mastodon-streaming
   become: true
+  failed_when: false
   listen: "Restart Mastodon services"
