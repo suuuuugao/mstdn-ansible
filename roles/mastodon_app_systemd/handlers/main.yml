@@ -14,5 +14,5 @@
     - mastodon-sidekiq
     - mastodon-streaming
   become: true
-  failed_when: false
+  ignore_errors: "{{ mastodon_ignore_restart_failure | default(false) }}"
   listen: "Restart Mastodon services"

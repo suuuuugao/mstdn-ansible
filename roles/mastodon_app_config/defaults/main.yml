@@ -47,3 +47,7 @@ mastodon_vapid_public_key: ""
 mastodon_active_record_encryption_deterministic_key: ""
 mastodon_active_record_encryption_key_derivation_salt: ""
 mastodon_active_record_encryption_primary_key: ""
+
+# Handler safety gate: set true only in CI/test inventories where services are not fully started.
+# Production MUST leave this false to detect restart failures.
+mastodon_ignore_restart_failure: false
