@@ -36,3 +36,18 @@ mastodon_s3_bucket: "{{ s3.bucket | default('') }}"
 mastodon_s3_aws_access_key_id: "{{ s3.aws_access_key_id | default('') }}"
 mastodon_s3_aws_secret_access_key: "{{ s3.aws_secret_access_key | default('') }}"
 mastodon_s3_alias_host: "{{ s3.alias_host | default('') }}"
+
+# Secrets (provide via inventory or vault; template uses these fixed values)
+mastodon_secret_key_base: ""
+mastodon_otp_secret: ""
+mastodon_vapid_private_key: ""
+mastodon_vapid_public_key: ""
+
+# Active Record Encryption (Mastodon 4.x required)
+mastodon_active_record_encryption_deterministic_key: ""
+mastodon_active_record_encryption_key_derivation_salt: ""
+mastodon_active_record_encryption_primary_key: ""
+
+# Handler safety gate: set true only in CI/test inventories where services are not fully started.
+# Production MUST leave this false to detect restart failures.
+mastodon_ignore_restart_failure: false

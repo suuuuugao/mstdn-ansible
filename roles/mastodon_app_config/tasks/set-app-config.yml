@@ -1,49 +1,12 @@
 ---
-- name: Before Ansible 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
-  become: true
-  become_user: mastodon
-  no_log: true
-  ansible.builtin.lineinfile:
-    path: "{{ mastodon_app_path }}/.env.production"
-    regexp: '^{{ item.key }}=.*'
-    line: "{{ item.replace }}"
-  loop:
-    - { key: 'LOCAL_DOMAIN', replace: "LOCAL_DOMAIN={{ mastodon_app_local_domain }}" }
-    - { key: 'REDIS_HOST', replace: "REDIS_HOST={{ mastodon_redis_hostname }}" }
-    - { key: 'REDIS_PORT', replace: "REDIS_PORT={{ mastodon_redis_port }}" }
-    - { key: 'DB_HOST', replace: "DB_HOST={{ mastodon_pg_hostname }}" }
-    - { key: 'DB_USER', replace: "DB_USER={{ mastodon_pg_username }}" }
-    - { key: 'DB_NAME', replace: "DB_NAME={{ mastodon_pg_name }}" }
-    - { key: 'DB_PASS', replace: "DB_PASS={{ mastodon_pg_password }}" }
-    - { key: 'DB_PORT', replace: "DB_PORT={{ mastodon_pg_port }}" }
-    - { key: 'ES_ENABLED', replace: "ES_ENABLED={{ mastodon_es_enabled }}" }
-    - { key: 'ES_HOST', replace: "ES_HOST={{ mastodon_es_hostname }}" }
-    - { key: 'ES_PORT', replace: "ES_PORT={{ mastodon_es_port }}" }
-    - { key: 'ES_USER', replace: "ES_USER={{ mastodon_es_username }}" }
-    - { key: 'ES_PASS', replace: "ES_PASS={{ mastodon_es_password }}" }
-    - { key: 'SECRET_KEY_BASE', replace: "SECRET_KEY_BASE={{ __rails_secrets[0] }}" }
-    - { key: 'OTP_SECRET', replace: "OTP_SECRET={{ __rails_secrets[1] }}" }
-    - { key: 'VAPID_PRIVATE_KEY', replace: "{{ __vapid_key.stdout_lines[0] }}" }
-    - { key: 'VAPID_PUBLIC_KEY', replace: "{{ __vapid_key.stdout_lines[1] }}" }
-    - { key: 'SMTP_SERVER', replace: "SMTP_SERVER={{ mastodon_smtp_server }}" }
-    - { key: 'SMTP_PORT', replace: "SMTP_PORT={{ mastodon_smtp_port }}" }
-    - { key: 'SMTP_LOGIN', replace: "SMTP_LOGIN={{ mastodon_smtp_login }}" }
-    - { key: 'SMTP_PASSWORD', replace: "SMTP_PASSWORD={{ mastodon_smtp_password }}" }
-    - { key: 'SMTP_FROM_ADDRESS', replace: "SMTP_FROM_ADDRESS={{ mastodon_smtp_from_address }}" }
-    - { key: 'S3_ENABLED', replace: "S3_ENABLED={{ mastodon_s3_enabled }}" }
-    - { key: 'S3_BUCKET', replace: "S3_BUCKET={{ mastodon_s3_bucket }}" }
-    - { key: 'AWS_ACCESS_KEY_ID', replace: "AWS_ACCESS_KEY_ID={{ mastodon_s3_aws_access_key_id }}" }
-    - { key: 'AWS_SECRET_ACCESS_KEY', replace: "AWS_SECRET_ACCESS_KEY={{ mastodon_s3_aws_secret_access_key }}" }
-    - { key: 'S3_ALIAS_HOST', replace: "S3_ALIAS_HOST={{ mastodon_s3_alias_host }}" }
-    # - { key: 'IP_RETENTION_PERIOD', replace: "{{ retention_period.ip }}" }
-    # - { key: 'SESSION_RETENTION_PERIOD', replace: "{{ retention_period.session }}" }
-  when:
-    - item.key not in ['SECRET_KEY_BASE', 'OTP_SECRET', 'VAPID_PRIVATE_KEY', 'VAPID_PUBLIC_KEY'] or __result_copy_envfile.changed
-
-- name: Ensure .env.production permissions
-  ansible.builtin.file:
-    path: "{{ mastodon_app_path }}/.env.production"
+- name: Configure .env.production from template
+  ansible.builtin.template:
+    src: env.production.j2
+    dest: "{{ mastodon_app_path }}/.env.production"
     owner: "{{ mastodon_app_user_name }}"
     group: "{{ mastodon_app_user_name }}"
-    mode: '0640'
+    mode: "0640"
   become: true
+  become_user: "{{ mastodon_app_user_name }}"
+  no_log: true
+  notify: Restart Mastodon services
