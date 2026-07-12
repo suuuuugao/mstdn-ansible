@@ -4,23 +4,35 @@ mastodon_app_anyenv_path: /home/mastodon/.anyenv
 mastodon_app_user_name: mastodon
 mastodon_app_environment: production
 
-# Optional feature defaults (empty string or safe value = feature disabled / unset in .env)
+# group_vars/all/main.yml からのデフォルトマッピング
+mastodon_app_local_domain: "{{ federation.local_domain | default('') }}"
+
+mastodon_redis_hostname: "{{ redis.hostname | default('localhost') }}"
+mastodon_redis_port: "{{ redis.port | default('6379') }}"
+
+mastodon_pg_hostname: "{{ postgresql.hostname | default('/var/run/postgresql') }}"
+mastodon_pg_username: "{{ postgresql.username | default('mastodon') }}"
+mastodon_pg_name: "{{ postgresql.db_name | default('mastodon_production') }}"
+mastodon_pg_password: "{{ postgresql.password | default('') }}"
+mastodon_pg_port: "{{ postgresql.port | default('5432') }}"
+
 # ES (Elasticsearch) — disabled by default
-mastodon_es_hostname: ""
-mastodon_es_port: ""
-mastodon_es_username: ""
-mastodon_es_password: ""
+mastodon_es_enabled: "{{ elasticsearch.enabled | default('false') }}"
+mastodon_es_hostname: "{{ elasticsearch.hostname | default('') }}"
+mastodon_es_port: "{{ elasticsearch.port | default('') }}"
+mastodon_es_username: "{{ elasticsearch.username | default('') }}"
+mastodon_es_password: "{{ elasticsearch.password | default('') }}"
 
 # SMTP optional credentials (server/port/from_address are required but safe to default)
-mastodon_smtp_server: "localhost"
-mastodon_smtp_port: "25"
-mastodon_smtp_from_address: ""
-mastodon_smtp_login: ""
-mastodon_smtp_password: ""
+mastodon_smtp_server: "{{ smtp.server | default('') }}"
+mastodon_smtp_port: "{{ smtp.port | default('587') }}"
+mastodon_smtp_from_address: "{{ smtp.from_address | default('') }}"
+mastodon_smtp_login: "{{ smtp.login | default('') }}"
+mastodon_smtp_password: "{{ smtp.password | default('') }}"
 
 # S3 — disabled by default
-mastodon_s3_enabled: "false"
-mastodon_s3_bucket: ""
-mastodon_s3_aws_access_key_id: ""
-mastodon_s3_aws_secret_access_key: ""
-mastodon_s3_alias_host: ""
+mastodon_s3_enabled: "{{ s3.enabled | default('false') }}"
+mastodon_s3_bucket: "{{ s3.bucket | default('') }}"
+mastodon_s3_aws_access_key_id: "{{ s3.aws_access_key_id | default('') }}"
+mastodon_s3_aws_secret_access_key: "{{ s3.aws_secret_access_key | default('') }}"
+mastodon_s3_alias_host: "{{ s3.alias_host | default('') }}"
