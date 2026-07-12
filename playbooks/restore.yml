@@ -1,0 +1,7 @@
+---
+# リストア Playbook
+# 使い方: ansible-playbook -i inventory.yml playbooks/restore.yml
+- name: Mastodon restore
+  hosts: all
+  roles:
+    - mastodon_restore

@@ -1,0 +1,7 @@
+---
+# ヘルスチェック Playbook
+# 使い方: ansible-playbook -i inventory.yml playbooks/check.yml
+- name: Mastodon health check
+  hosts: all
+  roles:
+    - mastodon_healthcheck
