@@ -72,6 +72,7 @@ jobs:
                 mastodon_active_record_encryption_deterministic_key: '${{ secrets.MASTODON_AR_DET_KEY }}'
                 mastodon_active_record_encryption_key_derivation_salt: '${{ secrets.MASTODON_AR_SALT }}'
                 mastodon_active_record_encryption_primary_key: '${{ secrets.MASTODON_AR_PRIMARY_KEY }}'
+                mastodon_ignore_restart_failure: true
           INVENTORY
 
       - name: Run ansible (run1)
