@@ -1,0 +1,10 @@
+---
+# アプリ更新 Playbook — git pull / bundle / yarn / migrate / restart
+# 使い方: ansible-playbook -i inventory.yml playbooks/update.yml
+- name: Mastodon update
+  hosts: all
+  roles:
+    - mastodon_app_repository
+    - mastodon_app_packages
+    - mastodon_app_config
+    - mastodon_app_systemd
