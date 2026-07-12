@@ -11,3 +11,6 @@
     ansible_become: true
     ansible_become_user: root
   loop: "{{ mastodon_sys_copyfiles }}"
+  notify:
+    - Reload systemd daemon
+    - Restart Mastodon services

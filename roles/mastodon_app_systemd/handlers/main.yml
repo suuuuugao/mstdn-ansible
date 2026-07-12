@@ -1,0 +1,17 @@
+---
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true
+  listen: "Reload systemd daemon"
+
+- name: Restart Mastodon services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - mastodon-web
+    - mastodon-sidekiq
+    - mastodon-streaming
+  become: true
+  listen: "Restart Mastodon services"
